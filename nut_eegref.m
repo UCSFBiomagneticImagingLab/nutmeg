@@ -18,7 +18,7 @@ function meg = nut_eegref(meg,REF,domagic,external)
 if nargin<2, help nut_eegref, return, end
 if nargin<3, domagic=false; end
 
-if isfield(meg,'reference') && any(strcmpi(meg.reference,'deref'))
+if isfield(meg,'reference') && strcmpi(meg.reference,'deref')
     error('Your data has been preprocessed to be reference free.')
 end
 
@@ -56,7 +56,7 @@ else        % user defined REF electrode label.
     if isempty(meg.referenceidx), error('Chosen reference does not exist.'), end
     if any(~ismember(meg.referenceidx,meg.goodchannels)), error('Chosen reference was designated as bad channel.'), end
     meg.reference = REF;
-    reference = mean(meg.data(:,meg.referenceidx,:),2);
+    reference = mean(meg.data(:,meg.goodchannels==meg.referenceidx,:),2);
 end
 
 for k=1:size(meg.data,2)
