@@ -35,7 +35,6 @@ guidata(handles.fig,handles);
 
 plotdahead([],[],handles);
 
-%----------------------------------
 function plotdahead(hObject,dum2,handles)
 
 global st mesh nuts
@@ -43,7 +42,7 @@ if nargin<3
     handles = guidata(hObject);
 end
 
-sensCoord = nuts.meg.sensorCoord; % multiply to keep them visible on head
+sensCoord = nuts.meg.sensorCoord .* 1.05; % multiply to keep them visible on head
 
 if get(handles.hires,'Value')
     sensCoord = nut_meg2mri(sensCoord);
@@ -51,7 +50,7 @@ if get(handles.hires,'Value')
     Y = spm_read_vols(st.vols{1});
     thresh = nut_find_thresh(Y);
 
-    position=nut_vol2cloud(thresh,Y);
+    position=nut_vol2cloud6(thresh,Y);
     position = nut_voxels2mm(position); 
 
     mesh = nut_cloud2mesh(position);
@@ -73,36 +72,24 @@ else
     load(nuts.coreg.volfile);
     if isfield(vol.bnd(1),'tri'); vol.bnd(1).faces = vol.bnd(1).tri; end;   % Handle fieldtrip vols
     if isfield(vol.bnd(1),'pnt'); vol.bnd(1).vertices = vol.bnd(1).pnt; end;
-%     mesh = PrepareTriangleMesh(nut_mri2meg(vol.bnd(1).vertices),vol.bnd(1).faces(:,[1 3 2]));
-%     trisurf(mesh.e,mesh.p(:,1),mesh.p(:,2),mesh.p(:,3),max(mesh.p,[],2),'EdgeColor','none');
-%     colormap copper
+    mesh = PrepareTriangleMesh(nut_mri2meg(vol.bnd(1).vertices),vol.bnd(1).faces(:,[1 3 2]));
 
     figure(handles.fig);
-
-    nodes = nut_mri2meg(vol.bnd(1).vertices);
-    faces = vol.bnd(1).faces;
-
-    trimesh(faces,nodes(:,1),nodes(:,2),nodes(:,3),'FaceColor','k');
-    shading faceted
-    view([-209 24]); 
-    axis equal
-    axis off
-    
-    colormap(pink);
+    trisurf(mesh.e,mesh.p(:,1),mesh.p(:,2),mesh.p(:,3),max(mesh.p,[],2),'EdgeColor','none');
+    colormap copper
 end
 
 hold on
-plot3(sensCoord(:,1),sensCoord(:,2),sensCoord(:,3),'ko','MarkerFaceColor','k','MarkerSize',10);
+plot3(sensCoord(:,1),sensCoord(:,2),sensCoord(:,3),'wo','MarkerFaceColor','w','MarkerSize',10);
 hold off
 set(gca,'visible','off')
 rotate3d on
 %TODO: how to prevent rotation from changing size of head?
 
 handles.label=zeros(1,size(sensCoord,1));
-sensCoord=sensCoord*1.05;
 for k=1:size(sensCoord,1)
     handles.label(k)=text(sensCoord(k,1),sensCoord(k,2),sensCoord(k,3),nuts.meg.sensor_labels{k}, ...
-        'visible','off','color','w','fontweight','bold','horizontalalignment','center');
+        'visible','off','horizontalalignment','center');
 end
 guidata(handles.fig,handles);
 
@@ -122,14 +109,7 @@ function toggle(hObject,dum2)
 handles = guidata(hObject);
 setting=setdiff(['on ';'off'],get(handles.label(1),'visible'),'rows');
 set(handles.label,'visible',setting)
-%figure(handles.fig);
-switch setting
-case 'on'
-    shading flat
-case 'off'
-    shading faceted
-end
-    
+
 function closeit(dum1,dum2)
 
 clear global mesh

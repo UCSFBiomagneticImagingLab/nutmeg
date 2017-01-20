@@ -1,4 +1,4 @@
-function R = fcm_voxel2roi(voxels,coreg,method,roideffile,badroiidx,lesion)
+function R = fcm_voxel2roi(voxels,coreg,method,roideffile,badroiidx)
 % FCM_VOXEL2ROI  calculates the transformation matrices for switching
 %                beween voxels and ROIs
 % R = fcm_voxel2roi(voxels,coreg,¦method¦,¦roideffile¦,¦rois2exclude¦)
@@ -17,9 +17,7 @@ function R = fcm_voxel2roi(voxels,coreg,method,roideffile,badroiidx,lesion)
 %                      orienations approriately).
 % roideffile    optional matlab file containing ROI definitions (AAL definitions by default)
 % rois2exclude  optional index numbers of ROIs to be excluded
-% lesion        optional file name of spatially normalized lesion MRI from
-%               MRIcro entries >0 indicate lesion). If given, lesion voxels
-%               will be excluded.
+
 
 global fuse
 
@@ -43,22 +41,10 @@ if nargin>4 && ~isempty(badroiidx)
     bad=ismember(ROI.nr,badroiidx);
     ROI.nr(bad)=[];
     ROI.voxels(bad,:)=[];
-    ROI.label(badroiidx)=[];
     clear bad
 end
 
-masklesion = ((nargin>5) && ~isempty(lesion));
-if masklesion
-    V=spm_vol(lesion);
-    [Y,XYZ]=spm_read_vols(V);
-    [~,ir,il]=intersect(ROI.voxels,XYZ','rows');
-    if isempty(ir), error('Lesion and ROI coordinates do not seem to correspond.'), end
-    Y=Y(il);
-    ROI.nr=ROI.nr(ir); ROI.voxels=ROI.voxels(ir,:);
-    ROI.nr(Y>0)=0; 
-end
-
-roilist = unique(ROI.nr(ROI.nr>0));
+roilist = unique(ROI.nr);
 roilist = roilist(:).';  % make row vector
 numroi=length(ROI.label);
 
@@ -71,7 +57,7 @@ if usefastalgo   % This is much much much much faster, but rejects more voxels a
     newnr = interp3(RV,SMVB(:,2),SMVB(:,1),SMVB(:,3),'nearest',NaN);
 %     F = TriScatteredInterp(double(ROI.voxels),double(ROI.nr),'nearest');
 %     newnr=F(double(SMV));
-    good = isfinite(newnr) & (newnr>0);
+    good = isfinite(newnr);
     T = newnr(good);  % roi number of each voxel, voxels without ROI are removed
 else
     voxelsize=10;
@@ -106,9 +92,9 @@ R.numvoxinroi = zeros(1,numroi);
 R.roilabel = ROI.label;
 R.roidef = roideffile;
 
-for k=1:numroi
-    icurr= (T==roilist(k));
-    icurr2=(T2==roilist(k));
+for k=roilist
+    icurr= (T==k);
+    icurr2=(T2==k);
     R.numvoxinroi(k)=sum(icurr);
     if R.numvoxinroi(k)<1
         warning('NUTMEG:fcm:ROIwithoutVoxel','ROI "%s" has no voxels.',ROI.label{k})
@@ -119,7 +105,7 @@ for k=1:numroi
     end
 end
 
-if length(R.goodroi)~=numroi
+if length(R.goodroi)~=82
     R.voxel2roi_tfm = R.voxel2roi_tfm(:,R.goodroi);
     R.roi2voxel_tfm = R.roi2voxel_tfm(:,R.goodroi);
 end
@@ -133,8 +119,7 @@ end
 %===========
 function [voxelsblob,blob2mri_tfm] = mm2voxels(voxelsMNI)
 
-vdiff=unique(abs(diff(voxelsMNI)));   
-voxelsize=repmat(vdiff(2),[1 3])
+voxelsize=[2 2 2];   % true for AAL
 
 blob2mri_tfm = [ voxelsize(1)        0                 0             min(voxelsMNI(:,1))-voxelsize(1)
                             0          voxelsize(2)        0             min(voxelsMNI(:,2))-voxelsize(2)
