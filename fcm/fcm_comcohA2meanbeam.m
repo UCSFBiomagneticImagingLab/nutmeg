@@ -27,7 +27,7 @@ useroi = isfield(CC,'roifile');
 if useroi
     load(CC.roifile);
     if ~isfield(R,'goodroi'), R.goodroi=1:82; end
-    R.roilabel = R.roilabel(R.goodroi);
+    roilabel = R.roilabel(R.goodroi);
     nv=length(R.goodroi);
 else
     nv=size(nuts.voxels,1);
@@ -99,7 +99,7 @@ switch lower(typ)
             end
 
             for rr=1:nv
-                f = strmatch(R.roilabel{rr}(1:end-1),R.roilabel);
+                f = strmatch(roilabel{rr}(1:end-1),roilabel);
                 if ~isempty(f)
                     temp(rr,:,:) =  CC.coh(CM(rr,f),:,:);
                 else
@@ -144,7 +144,7 @@ switch lower(typ)
         if useroi
             side=repmat(' ',[1 nv]);  % prealloc
             for k=1:nv
-                side(k) = R.roilabel{k}(end);  % should contain L or R for each ROI
+                side(k) = roilabel{k}(end);  % should contain L or R for each ROI
             end
             
             % Bring comps to matrix form for faster performance
@@ -156,7 +156,7 @@ switch lower(typ)
             
             for rr=1:nv
                 e = find(side(rr)~=side);  % all contralateral ROIs
-                f = setdiff(e,strmatch(R.roilabel{rr}(1:end-1),R.roilabel));    % except the homologous
+                f = setdiff(e,strmatch(roilabel{rr}(1:end-1),roilabel));    % except the homologous
                 temp(rr,:,:) = mean(CC.coh(CM(rr,f),:,:),1);
             end
             
@@ -190,7 +190,7 @@ switch lower(typ)
         if useroi
             side=repmat(' ',[1 nv]);  % prealloc
             for k=1:nv
-                side(k) = R.roilabel{k}(end);  % should contain L or R for each ROI
+                side(k) = roilabel{k}(end);  % should contain L or R for each ROI
             end
             
             % Bring comps to matrix form for faster performance
@@ -229,7 +229,7 @@ switch lower(typ)
             end
             ni = length(nuts.selvox.ipsilab);
             for k=1:ni
-                idx(k) = find(ismember(R.roilabel,nuts.selvox.ipsilab{k}));
+                idx(k) = find(ismember(roilabel,nuts.selvox.ipsilab{k}));
             end
         else
             idx = nuts.selvox.ipsi; % ROI voxel indices

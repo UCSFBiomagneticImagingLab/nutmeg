@@ -1,8 +1,8 @@
-function beam=fcm_corr(imagingdatafile,clindata,clindata2)
+function beam=fcm_corr(imagingdatafile,clindata,clindata2,corrtype)
 % FCM_CORR calculates the linear (partial) correlation between imaging data
 %          and clinical parameters.
 %
-%   beam = fcm_corr(imagingdatafile, clindata [,covar])
+%   beam = fcm_corr(imagingdatafile, clindata [,covar] [,corrtype])
 %
 % imagingdatafile   name of file containing pop structure created with
 %                   nut_beampopulation.
@@ -10,6 +10,7 @@ function beam=fcm_corr(imagingdatafile,clindata,clindata2)
 %                   match the number of subjects in the imagingdata file.
 % covar             optional confounding covariate(s). If given, partial
 %                   correlations are calculated.
+% corrtype          'Pearson' is default, options are 'Spearman' or 'Kendall'
 
 % Settings
 FDR=0.1;
@@ -17,7 +18,6 @@ MinClusterSize = 180; % value is based on Monte Carlo simulation, but may be dif
 
 beam=[];
 if nargin<2, help fcm_corr, return, end
-dopartcorr = (nargin>2 && ~isempty(clindata2));
 
 if ~exist(imagingdatafile,'file') && ~exist([imagingdatafile '.mat'],'file')
     error('Imagingdata file does not exist.')
@@ -33,8 +33,32 @@ end
 if( nsubj ~= length(clindata) )
     error('Behavioral data and imaging data do not have the same number of subjects.')
 end
-
 clindata=clindata(:);
+
+dopartcorr = (nargin>2 && ~isempty(clindata2));
+
+if nargin<4
+    corrtype = 'Pearson';
+    if nut_normtest(clindata)
+        disp('Clinical data does not have normal distribution. Using Spearman correlations.')
+        corrtype = 'Spearman';
+    end
+    % Checking for normal distribution of neural data only at a few
+    % voxel-time-frequency points!
+    N = reshape(pop.s,[nsubj nv*nt*nf]);
+    nN= size(N,2);
+    idx = randperm(nN); 
+    N = N(:,idx(1:20)); clear idx
+    rh = false(20,1);
+    for k=1:20
+        rh(k) = nut_normtest(N(:,k));
+    end
+    sum(rh)
+    if sum(rh>5)
+        disp('Neural data does not have normal distribution. Using Spearman correlations.')
+        corrtype = 'Spearman';
+    end
+end
 
 % if ~useroi
 %     goodtim = find(squeeze(all(all(all(isfinite(pop.s),1),2),4)))';
@@ -47,20 +71,19 @@ clindata=clindata(:);
 R = zeros(nv,nt,nf);
 P = ones(nv,nt,nf);
 
-%warning('off','MATLAB:divideByZero');
+
 for ff = goodfrq
     for tt = goodtim
         goodvox = ( sum( ( pop.s(:,:,tt,ff)==0 | isnan(pop.s(:,:,tt,ff))) , 1) < 3 );
         if any(goodvox)
             if dopartcorr
-                [R(goodvox,tt,ff),P(goodvox,tt,ff)] = partialcorr(pop.s(:,goodvox,tt,ff),clindata,clindata2,'rows','complete'); %,'type','Spearman'
+                [R(goodvox,tt,ff),P(goodvox,tt,ff)] = partialcorr(pop.s(:,goodvox,tt,ff),clindata,clindata2,'rows','complete','type',corrtype); 
             else
-                [R(goodvox,tt,ff),P(goodvox,tt,ff)] = corr(pop.s(:,goodvox,tt,ff),clindata,'rows','complete'); %,'type','Spearman'
+                [R(goodvox,tt,ff),P(goodvox,tt,ff)] = corr(pop.s(:,goodvox,tt,ff),clindata,'rows','complete','type',corrtype); 
             end
         end
     end
 end
-%warning('on','MATLAB:divideByZero');
 
 if strncmp( spm('ver'),'SPM8',4 ) 
     spmmri = [fileparts(which('spm')) filesep 'canonical' filesep 'avg152T1.nii'];
@@ -90,9 +113,8 @@ beam.coreg = struct('mripath', spmmri, ...
      'norm_mripath',spmmri, ...
      'brainrender_path',[fileparts(which('spm.m')) filesep 'rend' filesep 'render_single_subj.mat']);
 beam.corr = struct('behavdata',clindata,'imagingdata',imagingdatafile,'nr',pop.subjnr, ...
-    'type','Pearson','tail','both','p_uncorr',P,'FDR',FDR);
+    'type',corrtype,'tail','both','p_uncorr',P,'FDR',FDR);
 if dopartcorr
-    beam.corr.type = 'Partial';
     beam.corr.confoundingcovar = clindata2;
 end
 

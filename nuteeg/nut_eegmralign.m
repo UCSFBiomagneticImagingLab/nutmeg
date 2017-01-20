@@ -3,7 +3,7 @@
 % the MR is available for the subject. Otherwise, allows warping of a
 % template MR to the EEG sensor and fiducial coordinates (only for EEG
 % systems with fiducial coregistration).
-% @author Daniel D.E. Wong
+% @author Daniel D.E. Wong and Adrian G. Guggisberg
 %%
 function nut_eegmralign(fitType)
 
@@ -34,7 +34,7 @@ end
 % Create mrifid data structure
 if ~isfield(nuts.coreg,'volfile')
     [file,path] = uigetfile('*_vol.mat','Open Mesh File');
-    if isequal(file,0); errordlg('No mesh file loaded'); return; end;
+    if isequal(file,0); return; end;
     nuts.coreg.volfile = fullfile(path,file);
 end
 load(nuts.coreg.volfile);
@@ -99,8 +99,8 @@ if strcmp(fitType,'Warp MR')
     % sensors (this provides an approximate interpolated headshape)
     disp('Interpolating headshape...');
     
-    mrSensorCoord = mrSensorCoord(nuts.meg.goodchannels,:);             % Only goodchannels should be used for head surface interpolation
-    eegfid.sensorCoord = eegfid.sensorCoord(nuts.meg.goodchannels,:);
+    %mrSensorCoord = mrSensorCoord(nuts.meg.goodchannels,:);             % Only goodchannels should be used for head surface interpolation
+    %eegfid.sensorCoord = eegfid.sensorCoord(nuts.meg.goodchannels,:);
     warp_vertices = tps_warp([mrifid.nasion; mrifid.lpa; mrifid.rpa; mrSensorCoord],[eegfid.nasion; eegfid.lpa; eegfid.rpa; eegfid.sensorCoord],mrifid.hsp.p);
     %warp_vertices = tps_warp(mrSensorCoord,eegfid.sensorCoord,mrifid.hsp.p);
     eegfid.hsp = PrepareTriangleMesh(warp_vertices,vol.bnd(1).faces(:,[1 3 2]));
@@ -128,8 +128,6 @@ if strcmp(fitType,'Warp MR')
     disp('Interpolating...')
     Y = spm_bsplins(c,XYZ(:,1),XYZ(:,2),XYZ(:,3),d);
     Y = reshape(Y,st.vols{1}.dim(1:3));
-    size(Y)
-    clear XYZ;
     
     % Save warped MR
     disp('Writing warped MR...')
@@ -139,6 +137,20 @@ if strcmp(fitType,'Warp MR')
         V.fname=strcat(path,file);
         spm_write_vol(V,Y);
     end
+    
+    [file,path] = uigetfile('*.img','Open Grey Matter MRI to warp (optional, cancel otherwise)');
+    if ~isequal(file,0) & ~isequal(path,0)
+        V=spm_vol(strcat(path,file));
+        c = spm_bsplinc(V,d);
+        Y = spm_bsplins(c,XYZ(:,1),XYZ(:,2),XYZ(:,3),d);
+        Y = reshape(Y,V.dim(1:3));
+        [file,path] = uiputfile('*.img','Save Warped Grey Matter MRI');
+        if ~isequal(file,0) & ~isequal(path,0)
+            V.fname=strcat(path,file);
+            spm_write_vol(V,Y);
+        end
+    end
+    clear XYZ;    
     
     % Warp BEM points
     [file,path] = uigetfile('*_vol.mat','Open Source Mesh File for Warping');
@@ -151,9 +163,11 @@ if strcmp(fitType,'Warp MR')
             %vol.bnd(i).vertices = vol.bnd(i).vertices-repmat(minXYZ,size(vol.bnd(i).vertices,1),1);
             %vol.bnd(i).vertices = vol.bnd(i).vertices-repmat((dim'+1)/2,size(vol.bnd(i).vertices,1),1);
         end
+        vol = nut_checksurf(vol);
         [file,path] = uiputfile('*_vol.mat','Save Warped Mesh');  % BEM points are saved in MRI coordinates
         if ~isequal(file,0) & ~isequal(path,0)
             save(strcat(path,file),'vol');
+            nuts.coreg.volfile=strcat(path,file);
         end
     end
     
@@ -167,6 +181,9 @@ if strcmp(fitType,'Warp MR')
     if ~isequal(file,0) & ~isequal(path,0)
         save(strcat(path,file),'fids','-ascii');
     end
+    
+    % Save sensor coords in MRI space
+    nuts.coreg.sensorCoord = nut_meg2mri(nuts.meg.sensorCoord);
 end
 
 
