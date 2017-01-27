@@ -17,8 +17,6 @@ if ischar(beam)
     beam=nut_beam_legacy_compatibility(beam);
 end
 
-% ispop=~iscell(beam.s);
-
 xx = unique(beam.voxels(:,1))';     % Make sure the template grid matches the data voxel grid
 yy = unique(beam.voxels(:,2))';
 zz = unique(beam.voxels(:,3))';
@@ -39,9 +37,6 @@ nuv = size(beam.voxels,1);
 ns  = length(beam.s);
 nf  = size(beam.s{1},3);
 
-% if ispop
-% end
-
 lim = beam.voxelsize*1.1;
 sinterp = repmat({nan(num,length(beam.timepts),size(beam.bands,1))},[1 ns]);
 for k=1:num
@@ -50,15 +45,11 @@ for k=1:num
     if ~isempty(v)
         dist = (1./sqrt(sum(vot(v,:).^2,2)))';                           % calculate Euclidian distances to missing voxel
         totdist = sum(dist);                                            % shorter distances weigh more
-%         if ispop
-%         else
-            
         for s=1:ns
             for f=1:nf
                 sinterp{s}(k,:,f) = (dist./totdist) * beam.s{s}(v,:,f);     % linear interpolation
             end
         end
-%         end
     end
 end
 

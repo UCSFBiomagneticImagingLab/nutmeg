@@ -1,6 +1,6 @@
 function nut_coreg_firstpass
 
-global nuts st
+global coreg st
 %[filename_ahs, pathname1]=uigetfile('*.ahs','Please select the head shape.');
 % if isequal(filename_ahs,0)|isequal(pathname1,0)
 %     % screw this, user hit cancel
@@ -22,21 +22,21 @@ global nuts st
 
 
 % hsCoord_mri=nut_meg2mri(coreg.hsCoord);
-hsCoord_mri = nut_coordtfm(nuts.coreg.hsCoord,nuts.coreg.meg2mri_tfm);
+hsCoord_mri = nut_coordtfm(coreg.hsCoord,coreg.meg2mri_tfm);
 
 % project the points to Head surface
-[prjpts_mm]=nut_prjsrf(nuts.coreg.mesh,hsCoord_mri); %,ORIGIN,VOX);
+[prjpts_mm]=nut_prjsrf(coreg.mesh,hsCoord_mri); %,ORIGIN,VOX);
 
 % Find the final stage transformation matrix
-[nuts.coreg.hsCoord_mrimm_ls, nuts.coreg.mean_sq_err]= nut_coreg_leastsquares(nuts.coreg.hsCoord,prjpts_mm); %,VOX,ORIGIN);
+[coreg.hsCoord_mrimm_ls, coreg.mean_sq_err]= nut_coreg_leastsquares(coreg.hsCoord,prjpts_mm); %,VOX,ORIGIN);
 
 
 % following jazz is needed because SPM's blob freaks out when given
 % negative coordinates, and needs a dilation to know these are big voxels
 % (chose 4 mm^3 voxel size)
 voxelsize = [4 4 4];
-if min(nuts.coreg.hsCoord_mrimm_ls(:))<0
-    shift=min(nuts.coreg.hsCoord_mrimm_ls(:));
+if min(coreg.hsCoord_mrimm_ls(:))<0
+    shift=min(coreg.hsCoord_mrimm_ls(:));
 else
     shift=0;
 end
@@ -45,7 +45,7 @@ translation_tfm = [ voxelsize(1)            0            0 shift
                                0            0 voxelsize(3) shift
                                0            0            0 1 ];
 
-hs_coord = nut_coordtfm(nuts.coreg.hsCoord_mrimm_ls,inv(translation_tfm));
+hs_coord = nut_coordtfm(coreg.hsCoord_mrimm_ls,inv(translation_tfm));
 
 keep=find(prod(double(hs_coord > 0.5),2)); % discard coords with nonpositive voxels
 hs_blobs  = hs_coord(keep,:);

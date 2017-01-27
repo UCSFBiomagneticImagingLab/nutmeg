@@ -44,7 +44,7 @@ varargout{1} = handles.output;
 
 function nut_renderhead_button_Callback(hObject, eventdata, handles)
 % --- [Generate Mesh] button callback.
-global st nuts
+global st coreg
 threshold = str2num(get(findobj('Tag','nut_vol2cloud_text'),'String'));
 if (isempty(threshold))
     msgbox('Not a valid threshold value',...
@@ -54,12 +54,12 @@ else
     position=nut_vol2cloud6(threshold,spm_read_vols(st.vols{1}));
 end
  
-if(isfield(nuts.coreg,'mesh'))
-    nuts.coreg = rmfield(nuts.coreg,'mesh');
+if(isfield(coreg,'mesh'))
+    coreg = rmfield(coreg,'mesh');
 end
-nuts.coreg.mesh = nut_cloud2mesh(position);
-nuts.coreg.mesh=nut_mesh_smoothing(nuts.coreg.mesh);
-nuts.coreg.mesh=nut_optmesh(nuts.coreg.mesh);
+coreg.mesh = nut_cloud2mesh(position);
+coreg.mesh=nut_mesh_smoothing(coreg.mesh);
+coreg.mesh=nut_optmesh(coreg.mesh);
 position = nut_voxels2mm(position);  % makes more sense to plot mm
 figure('Units','normalized','Position',[.05 .2 .6 .6]);
 subplot(2,3,1)
@@ -72,11 +72,11 @@ subplot(2,3,3)
 plot(position(:,2),position(:,3),'.'); axis equal off;
 title('sagittal view')
 subplot('position',[.25 .05 .5 .5]);
-[m1,m2,m3]=size(nuts.coreg.mesh);
-nuts.coreg.mesh=reshape(nuts.coreg.mesh,m1*m2,m3);
-nuts.coreg.mesh=nut_voxels2mm(nuts.coreg.mesh);  %we'll keep mesh in mri mm coords from now on
-nuts.coreg.mesh=reshape(nuts.coreg.mesh,m1,m2,m3);
-nut_show_head(nuts.coreg.mesh);
+[m1,m2,m3]=size(coreg.mesh);
+coreg.mesh=reshape(coreg.mesh,m1*m2,m3);
+coreg.mesh=nut_voxels2mm(coreg.mesh);  %we'll keep mesh in mri mm coords from now on
+coreg.mesh=reshape(coreg.mesh,m1,m2,m3);
+nut_show_head(coreg.mesh);
 nut_coreg_enabler
 
 

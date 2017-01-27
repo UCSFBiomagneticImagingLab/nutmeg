@@ -4,13 +4,13 @@ function nut_adjust_coregistry
 % over the MRI data to reduce the error between the estimated
 % MRI headshape data and the points projected to the head surface
 
-global nuts st
-if(~isfield(nuts.coreg,'mesh'))
+global coreg st
+if(~isfield(coreg,'mesh'))
              msgbox('Click Mesh Generation -> nut_cloud2mesh first','Mesh not found','warn')
              return            
 end
 %check if hsCoord exist in the data file
-if(~isfield(nuts.coreg,'hsCoord'))  %what about hsCoord_mrimm_ls
+if(~isfield(coreg,'hsCoord'))  %what about hsCoord_mrimm_ls
         msgbox('Go to Mark/Edit Fiducials -> Save fiducials and show coregistry in 2D first',...
                'Could not find data in structure NUTS','warn')
         return;
@@ -33,14 +33,14 @@ else
             return
         end
         %calling the function
-        [transform_matrix_final_iter,nuts.coreg.hsCoord_iter,nuts.coreg.mean_sq_err_iter]=nut_coregistry(nuts.coreg.mesh,iteration,nuts.coreg.hsCoord,nuts.coreg.hsCoord_mrimm_ls,nuts.coreg.meg2mri_tfm);
-        nuts.coreg.meg2mri_tfm_lsq=nuts.coreg.meg2mri_tfm;
-        nuts.coreg.meg2mri_tfm=transform_matrix_final_iter;
-        nuts.coreg.iteration=iteration;
+        [transform_matrix_final_iter,coreg.hsCoord_iter,coreg.mean_sq_err_iter]=nut_coregistry(coreg.mesh,iteration,coreg.hsCoord,coreg.hsCoord_mrimm_ls,coreg.meg2mri_tfm);
+        coreg.meg2mri_tfm_lsq=coreg.meg2mri_tfm;
+        coreg.meg2mri_tfm=transform_matrix_final_iter;
+        coreg.iteration=iteration;
         
         voxelsize = [4 4 4];
-        if min(nuts.coreg.hsCoord_mrimm_ls(:))<0
-            shift=min(nuts.coreg.hsCoord_mrimm_ls(:));
+        if min(coreg.hsCoord_mrimm_ls(:))<0
+            shift=min(coreg.hsCoord_mrimm_ls(:));
 		else
             shift=0;
 		end
@@ -49,7 +49,7 @@ else
                                0 voxelsize(2)            0 shift
                                0            0 voxelsize(3) shift
                                0            0            0 1 ];
-        hs_coord = nut_coordtfm(nuts.coreg.hsCoord_iter,inv(translation_tfm));
+        hs_coord = nut_coordtfm(coreg.hsCoord_iter,inv(translation_tfm));
 		keep=find(prod(double(hs_coord > 0.5),2)); % discard coords with nonpositive voxels
 		hs_blobs  = hs_coord(keep,:);
 		spm_orthviews('rmblobs',1);
@@ -68,7 +68,7 @@ function [transform_matrix_final_iter,hsCoord_iter,mean_sq_err_iter]=nut_coregis
 %get the values from the edit text box of the GUI nut_meg_mri_toolbox
 % fov=str2num(get(findobj('Tag','nut_field_of_view'),'String'));
 % width=str2num(get(findobj('Tag','nut_slice_width'),'String'));
-%global st
+global st
 % DIM = st.vols{1}.dim(1:3);
 % fov=st.vols{1}.private.hdr.dime.dim(2)*st.vols{1}.private.hdr.dime.pixdim(2);
 % width=st.vols{1}.private.hdr.dime.pixdim(4);

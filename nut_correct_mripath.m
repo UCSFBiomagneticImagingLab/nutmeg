@@ -20,19 +20,6 @@ if nargin<2
     end
 end
 
-% Check if MRI is SPM template. In this case we should find it easily.
-[dum,fi,ext]=fileparts(coreg.mripath);
-fi=[fi ext];
-if strcmp(fi,'avg152T1.nii')
-    whichdir=which(fi);
-    if ~isempty(whichdir)
-        coreg.mripath=whichdir;
-        coreg.norm_mripath=whichdir;
-        fprintf('Updated successfully. New path is %s.\n',coreg.mripath)
-        return
-    end
-end
-
 % Create cell array with all potential new directories
 lim=find(newbase==filesep);
 L=[[1;lim'+1] [lim'-1;length(newbase)]];

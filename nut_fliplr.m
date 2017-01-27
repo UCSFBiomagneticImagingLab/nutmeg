@@ -11,17 +11,11 @@ if any(stru.voxels(1:5,:)-round(stru.voxels(1:5,:))>1e-2)
     error('Voxel coordinates are not close to integer.')
 end
 
-mn=min(stru.voxels); mx=max(stru.voxels);
-lridx=find(-mn==mx);
-if isempty(lridx), lridx=1; end
-fprintf('Looking up left-right cooordinates in column %d of voxels field.\n',lridx)
-
-left = find(stru.voxels(:,lridx)<0);
+left = find(stru.voxels(:,1)<0);
 leftvox = stru.voxels(left,:);
-lookfor = leftvox;
-lookfor(:,lridx) = -leftvox(:,lridx);
+lookfor = [-leftvox(:,1) leftvox(:,2:3)];
 
-mid = find(stru.voxels(:,lridx)==0);
+mid = find(stru.voxels(:,1)==0);
 midvox = stru.voxels(mid,:);
 
 [good,flipidx] = ismember(lookfor,stru.voxels,'rows');

@@ -193,9 +193,9 @@ else % not MEG -> EEG
         nuts.meg.sensorCoord = data.hdr.elec.pnt*1000;
     end
     
-    aw=questdlg('Do you want to re-reference your data?','NUTMEG question','Cz','AVG','No','Cz');
-    if ~strcmp(aw,'No')
-        nuts.meg=nut_eegref(nuts.meg,aw);
+    aw=questdlg('Do you want to average reference your data?','NUTMEG question','Yes','No','Yes');
+    if strcmp(aw,'Yes')
+        nuts.meg=nut_eegref(nuts.meg,'AVG');
     end
     
 end

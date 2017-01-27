@@ -7,29 +7,29 @@ function nut_fiducial_callback
 %
 % Uses a lot of globals.
 
-global nuts 
+global coreg;
 % if isempty(nuts)
 %     msgbox('Load the image','Volume not found','warn')
 %     return;
 % end
-
+global st;
 switch get(gcbo,'Tag')
     case {'nut_left'}
         nut_leftcallback;
 %         nut_coreg_fiducials(false);
-        nuts.coreg=nut_coreg_fiducials(false,nuts.coreg);
+        coreg=nut_coreg_fiducials(false,coreg);
     case {'nut_right'}
         nut_rightcallback;
 %         nut_coreg_fiducials(false);
-        nuts.coreg=nut_coreg_fiducials(false,nuts.coreg);
+        coreg=nut_coreg_fiducials(false,coreg);
     case {'nut_nose'}
         nut_nosecallback;
-%         nut_coreg_fiducials(false,nuts.coreg);
-        nuts.coreg=nut_coreg_fiducials(false,nuts.coreg);
+%         nut_coreg_fiducials(false,coreg);
+        coreg=nut_coreg_fiducials(false,coreg);
     case {'nut_lsc'}
         nut_lsccallback;
 %         nut_coreg_fiducials(false);
-        nuts.coreg=nut_coreg_fiducials(false,nuts.coreg);
+        coreg=nut_coreg_fiducials(false,coreg);
     case {'nut_saveFiducials'}
         nut_saveFiducialscallback;
     case {'nut_showleft'}
@@ -56,54 +56,57 @@ nut_coreg_enabler
 
 %%--------------------------------------------
 function nut_leftcallback
-global screws nuts
+global screws
 %get the cursor value
 u=spm_orthviews('Pos');
 set(screws.coreg.handles.nut_left_text,'String',sprintf('MRI: %.1f %.1f %.1f',u));
 screws.l=u';
 if (~isempty(get(screws.coreg.handles.nut_nose_text,'String')) && ~isempty(get(screws.coreg.handles.nut_right_text,'String')))
-    nuts.coreg.fiducials_mri_mm(1,:) = u';
-    nuts.coreg.fiducials_mri_mm(2,:) = sscanf(get(screws.coreg.handles.nut_right_text,'String'), 'MRI: %g %g %g');
-    nuts.coreg.fiducials_mri_mm(3,:) = sscanf(get(screws.coreg.handles.nut_nose_text,'String'), 'MRI: %g %g %g');
+    global coreg
+    coreg.fiducials_mri_mm(1,:) = u';
+    coreg.fiducials_mri_mm(2,:) = sscanf(get(screws.coreg.handles.nut_right_text,'String'), 'MRI: %g %g %g');
+    coreg.fiducials_mri_mm(3,:) = sscanf(get(screws.coreg.handles.nut_nose_text,'String'), 'MRI: %g %g %g');
 end
 %nut_coreg_enabler
 
 
 %%--------------------------------------------
 function nut_rightcallback
-global screws nuts
+global screws
 %get the cursor value
 u=spm_orthviews('Pos');
 set(screws.coreg.handles.nut_right_text,'String',sprintf('MRI: %.1f %.1f %.1f',u));
 screws.r=u';
 if (~isempty(get(screws.coreg.handles.nut_left_text,'String')) && ~isempty(get(screws.coreg.handles.nut_nose_text,'String')))
-    nuts.coreg.fiducials_mri_mm(1,:) = sscanf(get(screws.coreg.handles.nut_left_text,'String'), 'MRI: %g %g %g');
-    nuts.coreg.fiducials_mri_mm(2,:) = u';
-    nuts.coreg.fiducials_mri_mm(3,:) = sscanf(get(screws.coreg.handles.nut_nose_text,'String'), 'MRI: %g %g %g');
+    global coreg
+    coreg.fiducials_mri_mm(1,:) = sscanf(get(screws.coreg.handles.nut_left_text,'String'), 'MRI: %g %g %g');
+    coreg.fiducials_mri_mm(2,:) = u';
+    coreg.fiducials_mri_mm(3,:) = sscanf(get(screws.coreg.handles.nut_nose_text,'String'), 'MRI: %g %g %g');
 end
 %nut_coreg_enabler
 
 
 %%--------------------------------------------
 function nut_nosecallback
-global screws nuts
+global screws
 %get the cursor value
 u=spm_orthviews('Pos');
 set(screws.coreg.handles.nut_nose_text,'String',sprintf('MRI: %.1f %.1f %.1f',u));
 screws.n=u';
 if (~isempty(get(screws.coreg.handles.nut_left_text,'String')) && ~isempty(get(screws.coreg.handles.nut_right_text,'String')))
-    nuts.coreg.fiducials_mri_mm(1,:) = sscanf(get(screws.coreg.handles.nut_left_text,'String'), 'MRI: %g %g %g');
-    nuts.coreg.fiducials_mri_mm(2,:) = sscanf(get(screws.coreg.handles.nut_right_text,'String'), 'MRI: %g %g %g');
-    nuts.coreg.fiducials_mri_mm(3,:) = u';
+    global coreg
+    coreg.fiducials_mri_mm(1,:) = sscanf(get(screws.coreg.handles.nut_left_text,'String'), 'MRI: %g %g %g');
+    coreg.fiducials_mri_mm(2,:) = sscanf(get(screws.coreg.handles.nut_right_text,'String'), 'MRI: %g %g %g');
+    coreg.fiducials_mri_mm(3,:) = u';
 end
 %nut_coreg_enabler
 
 %%--------------------------------------------
 function nut_lsccallback
 %get the cursor value
-global nuts
+global coreg
 %u=nut_mri2meg(spm_orthviews('Pos')');
-u=nut_coordtfm(spm_orthviews('Pos')',inv(nuts.coreg.meg2mri_tfm));
+u=nut_coordtfm(spm_orthviews('Pos')',inv(coreg.meg2mri_tfm));
 if (u(1)==0 & u(2)==0 & u(3)==0)
     msgbox('Please load the image','Image not loaded','error')
     return
@@ -126,11 +129,11 @@ end
 %%--------------------------------------------
 function nut_saveFiducialscallback
 %Load the "data_meg_mri.mat" file in the present function
-global nuts
-if isfield(nuts.coreg,'datapoints_final_iter')
+global coreg;
+if isfield(coreg,'datapoints_final_iter')
     %delete "datapoints_final_iter" from "data_meg_mri.mat" file
     %clear datapoints_final_iter;
-    nuts.coreg = rmfield(nuts.coreg,'datapoints_final_iter');       %%%is this necessary?
+    coreg = rmfield(coreg,'datapoints_final_iter');       %%%is this necessary?
 end
 global st;
 %check if Image is loaded or not
@@ -192,6 +195,7 @@ l = mean(nuts.meg.lsc,1);
 % spm_orthviews('Reposition',nut_meg2mri(l));
 
 % so this is a silly workaround, but i'm not losing any sleep over it
-spm_orthviews('Reposition',nut_coordtfm(l,nuts.coreg.meg2mri_tfm));
+global coreg
+spm_orthviews('Reposition',nut_coordtfm(l,coreg.meg2mri_tfm));
 
 %%--------------------------------------------
