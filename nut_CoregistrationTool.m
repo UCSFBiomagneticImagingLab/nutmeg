@@ -22,7 +22,7 @@ function varargout = nut_CoregistrationTool(varargin)
 
 % Edit the above text to modify the response to help nut_CoregistrationTool
 
-% Last Modified by GUIDE v2.5 09-Mar-2016 11:36:54
+% Last Modified by GUIDE v2.5 16-Jun-2009 20:58:46
 
 warning('off')  % hack so warning for "created by matlab 7.0" is turned off
 % Begin initialization code - DO NOT EDIT
@@ -63,40 +63,44 @@ guidata(hObject, handles);
 % UIWAIT makes nut_CoregistrationTool wait for user response (see UIRESUME)
 % uiwait(handles.nut_CoregistrationTool);
 
-global nuts screws
+global coreg;
+coreg = varargin{1};
 
 % fill in previously selected information, if available
-if isfield(nuts.coreg, 'mripath')
-    if length(nuts.coreg.mripath)>35
-        imagestring=['...' nuts.coreg.mripath(end-30:end)];
+if isfield(coreg, 'mripath')
+    if length(coreg.mripath)>35
+        imagestring=['...' coreg.mripath(end-30:end)];
         set(handles.nut_ImageNameText,'String',imagestring);
     else
-        set(handles.nut_ImageNameText,'String',nuts.coreg.mripath);
+        set(handles.nut_ImageNameText,'String',coreg.mripath);
     end
 end
-if isfield(nuts.coreg,'norm_mripath')
-    if length(nuts.coreg.norm_mripath)>40
-        imagestring=['...' nuts.coreg.norm_mripath(end-35:end)];
+if isfield(coreg,'norm_mripath')
+    if length(coreg.norm_mripath)>40
+        imagestring=['...' coreg.norm_mripath(end-35:end)];
         set(handles.nut_normimage_nametext,'String',imagestring);
     else
-        set(handles.nut_normimage_nametext,'String',nuts.coreg.norm_mripath);
+        set(handles.nut_normimage_nametext,'String',coreg.norm_mripath);
     end
 end
-if isfield(nuts.coreg,'brainrender_path')
-    if length(nuts.coreg.brainrender_path)>40
-        imagestring=['...' nuts.coreg.brainrender_path(end-35:end)];
+if isfield(coreg,'brainrender_path')
+    if length(coreg.brainrender_path)>40
+        imagestring=['...' coreg.brainrender_path(end-35:end)];
         set(handles.nut_renderedbrain_nametext,'String',imagestring);
     else
-        set(handles.nut_renderedbrain_nametext,'String',nuts.coreg.brainrender_path);
+        set(handles.nut_renderedbrain_nametext,'String',coreg.brainrender_path);
     end
 end
 
-% if(isfield(nuts.coreg,'fiducials_mri_mm'))
-%     set(handles.nut_left_text,'String',['MRI: ' num2str(nuts.coreg.fiducials_mri_mm(1,:),'%.1f ')]);
-%     set(handles.nut_right_text,'String',['MRI: ' num2str(nuts.coreg.fiducials_mri_mm(2,:),'%.1f ')]);
-%     set(handles.nut_nose_text,'String',['MRI: ' num2str(nuts.coreg.fiducials_mri_mm(3,:),'%.1f ')]);
+% if(isfield(coreg,'fiducials_mri_mm'))
+%     set(handles.nut_left_text,'String',['MRI: ' num2str(coreg.fiducials_mri_mm(1,:),'%.1f ')]);
+%     set(handles.nut_right_text,'String',['MRI: ' num2str(coreg.fiducials_mri_mm(2,:),'%.1f ')]);
+%     set(handles.nut_nose_text,'String',['MRI: ' num2str(coreg.fiducials_mri_mm(3,:),'%.1f ')]);
 % end
 
+
+
+global screws
 screws.coreg.handles = handles;
 nut_coreg_enabler
 
@@ -110,11 +114,12 @@ function varargout = nut_CoregistrationTool_OutputFcn(hObject, eventdata, handle
 % handles    structure with handles and user data (see GUIDATA)
 
 % Get default command line output from handles structure
-varargout{1} = handles.output;
+% varargout{1} = handles.output;
 
+global coreg screws
 uiwait(handles.output);
-%clear global screws
-
+clear global screws
+varargout{1} = coreg;
 
 % --- Executes during object creation, after setting all properties.
 function nut_orientation_menu_CreateFcn(hObject, eventdata, handles)
@@ -138,8 +143,8 @@ function nut_orientation_menu_Callback(hObject, eventdata, handles)
 
 % Hints: contents = get(hObject,'String') returns nut_orientation_menu contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from nut_orientation_menu
-global nuts
-nuts.coreg.orientation=get(hObject,'Value');
+global coreg
+coreg.orientation=get(hObject,'Value');
 nut_coreg_enabler;
 
 
@@ -176,7 +181,7 @@ function nut_normMRI_Callback(hObject, eventdata, handles)
 % hObject    handle to nut_normMRI (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global screws rivets nuts
+global coreg screws rivets
 if get(screws.coreg.handles.nut_orientation_menu,'Value')==2
     errordlg('you must use a neurological MRI for the whole spatial normalization thing to work here');
 end
@@ -187,12 +192,12 @@ end
 
 h=waitbar(0.2,'Loading normalized image volume...');
 
-nuts.coreg.norm_mripath = fullfile(norm_mripath,mrifile);
-if length(nuts.coreg.norm_mripath)>40
-    imagestring=['...' nuts.coreg.norm_mripath(end-35:end)];
+coreg.norm_mripath = fullfile(norm_mripath,mrifile);
+if length(coreg.norm_mripath)>40
+    imagestring=['...' coreg.norm_mripath(end-35:end)];
     set(findobj('Tag','nut_normimage_nametext'),'String',imagestring);
 else
-    set(findobj('Tag','nut_normimage_nametext'),'String',nuts.coreg.norm_mripath);
+    set(findobj('Tag','nut_normimage_nametext'),'String',coreg.norm_mripath);
 end
 snmat=[norm_mripath mrifile(2:end-4) '_sn.mat'];
 yimg=[norm_mripath 'y_' mrifile(2:end)];
@@ -214,7 +219,7 @@ if ~exist([yimg(1:end-4) '.nii'],'file') && ~exist([yimg(1:end-4) '.img'],'file'
         matlabbatch{2}.spm.util.defs.comp{1}.inv.comp{1}.sn2def.matname = {snmat};
         matlabbatch{2}.spm.util.defs.comp{1}.inv.comp{1}.sn2def.vox = NaN(1,3);
         matlabbatch{2}.spm.util.defs.comp{1}.inv.comp{1}.sn2def.bb = NaN(2,3);
-        matlabbatch{2}.spm.util.defs.comp{1}.inv.space = {nuts.coreg.norm_mripath};
+        matlabbatch{2}.spm.util.defs.comp{1}.inv.space = {coreg.norm_mripath};
         matlabbatch{2}.spm.util.defs.ofname = ['i' mrifile(2:(end-4))];
         matlabbatch{2}.spm.util.defs.fnames = '';
         matlabbatch{2}.spm.util.defs.interp = 1;
@@ -274,7 +279,7 @@ function nut_renderedbrain_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global screws nuts
+global coreg screws
 if get(screws.coreg.handles.nut_orientation_menu,'Value')==2
     errordlg('you must use a neurological MRI for the whole rendered brain bit to work here');
 end
@@ -283,27 +288,10 @@ if isequal(brainrender_file,0)|isequal(brainrender_path,0)
     return;
 end
 
-nuts.coreg.brainrender_path = fullfile(brainrender_path,brainrender_file);
-if length(nuts.coreg.brainrender_path)>40
-    imagestring=['...' nuts.coreg.brainrender_path(end-35:end)];
+coreg.brainrender_path = fullfile(brainrender_path,brainrender_file);
+if length(coreg.brainrender_path)>40
+    imagestring=['...' coreg.brainrender_path(end-35:end)];
     set(findobj('Tag','nut_renderedbrain_nametext'),'String',imagestring);
 else
-    set(findobj('Tag','nut_renderedbrain_nametext'),'String',nuts.coreg.brainrender_mripath);
+    set(findobj('Tag','nut_renderedbrain_nametext'),'String',coreg.brainrender_mripath);
 end
-
-% --- Executes on button press in nut_done_coreg.
-function nut_done_coreg_Callback(hObject, eventdata, handles)
-% hObject    handle to nut_done_coreg (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-global nuts
-
-% This happens when template MR was warped to individual sensorCoords.
-% Need to make sure the new meg2mri_tfm does not produce shift
-if isfield(nuts.coreg,'sensorCoord')
-    nuts.meg.sensorCoord = nut_mri2meg(nuts.coreg.sensorCoord);
-end
-
-clear global screws
-closereq;

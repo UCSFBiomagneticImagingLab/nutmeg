@@ -129,7 +129,7 @@ if docluster
     end
 else
     MaxCluster=nan(SP.numperm,size(MaxT,2));
-    th1=NaN;
+    th1=[];
 end
 
 % Permutations
