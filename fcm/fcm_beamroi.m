@@ -2,7 +2,7 @@ function beam = fcm_beamroi(beam,rfile)
 % FCM_BEAMROI  transforms voxel data to ROIs.
 %
 % Usages:
-%  beam = fcm_beamroi(beam,roideffile,method)
+%  beam = fcm_beamroi(beam,roideffile)
 %  beam = fcm_beamroi(beam,subjectroifile)
 %  beam = fcm_beamroi(beam);
 %
@@ -18,7 +18,7 @@ function beam = fcm_beamroi(beam,rfile)
 if nargin<2
     if ~isfield(beam,'R')
         roideffile = [fileparts(which('fcm_gui')) filesep 'templates' filesep 'AAL_ROI.mat'];
-        beam.R = fcm_voxel2roi(beam.voxels,beam.coreg,'one',roideffile);
+        beam.R = fcm_voxel2roi(beam.voxels,beam.coreg,'mean',roideffile);
     end
 else
     load(rfile)
@@ -26,7 +26,7 @@ else
         beam.R=R;
     elseif exist('ROI','var')
         clear ROI
-        beam.R = fcm_voxel2roi(beam.voxels,beam.coreg,'one',rfile);
+        beam.R = fcm_voxel2roi(beam.voxels,beam.coreg,'mean',rfile);
     else
         error('Second input parameter must be a ROI definition file or the subject''s ROI file.')
     end

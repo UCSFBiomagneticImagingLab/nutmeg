@@ -1,7 +1,7 @@
 function nut_importheadshape(headshapefile)
 % Read the Head Shape file, get the headshape points and the fiducials       
 
-global  coreg st screws
+global nuts st screws
 
 if(~exist('headshapefile','var'))
     [headshapefile, headshapepath]=uigetfile({'*.ahs;*.hsp;*.pos;*.shape;*.mat;*.elc;hs_file.*'},'Please select the head shape.');
@@ -22,8 +22,8 @@ if(strcmp(hsfile_no_ext,'hs_file'))
     % also present:
     % tmp.index.cz;
     % tmp.index.inion;
-    coreg.hsCoord=tmp.point'*1000 % convert from m to mm
-    coreg.hsCoord=[coreg.hsCoord;fiducials_meg];
+    nuts.coreg.hsCoord=tmp.point'*1000 % convert from m to mm
+    nuts.coreg.hsCoord=[nuts.coreg.hsCoord;fiducials_meg];
 else
     switch(hstype)
         case '.hsp'
@@ -31,7 +31,7 @@ else
             fiducials_meg=[fid_x,fid_y,fid_z]*1000;  % convert from m to mm
 
             [hs_x,hs_y,hs_z] = textread(headshapefile,'%f%f%f','headerlines',14);
-            coreg.hsCoord=[hs_x,hs_y,hs_z]*1000; % convert from m to mm
+            nuts.coreg.hsCoord=[hs_x,hs_y,hs_z]*1000; % convert from m to mm
 
             clear crap1 crap2;
         case '.ahs'
@@ -40,27 +40,27 @@ else
             fiducials_meg=[a,b,c]*10;  % convert from cm to mm
             fiducials_meg=fiducials_meg';
             [a1,b1,c1,d,e,f,g,h,i,j,k,l]=textread(headshapefile,'%f%f%f%n%n%n%n%n%n%n%n%s','headerlines',6);
-            coreg.hsCoord=[a1,b1,c1]*10;  % convert from cm to mm
-            coreg.hsCoord=[nuts.coreg.hsCoord;fiducials_meg'];
+            nuts.coreg.hsCoord=[a1,b1,c1]*10;  % convert from cm to mm
+            nuts.coreg.hsCoord=[nuts.coreg.hsCoord;fiducials_meg'];
             clear a1 b1 c1 a b c d e f g h i j k l m;
         case '.pos'
             [num] = textread(headshapefile,'%f',1);
             [ind,hs_x,hs_y,hs_z] = textread(headshapefile,'%s%f%f%f',num,'headerlines',1);
             [label,fid_x,fid_y,fid_z] = textread(headshapefile,'%s%f%f%f',3,'headerlines',1+num);
             fiducials_meg=[fid_x,fid_y,fid_z]'*10; % convert from cm to mm
-            coreg.hsCoord=[hs_x,hs_y,hs_z]*10; % convert from cm to mm
-            coreg.hsCoord=[coreg.hsCoord;fiducials_meg'];
+            nuts.coreg.hsCoord=[hs_x,hs_y,hs_z]*10; % convert from cm to mm
+            nuts.coreg.hsCoord=[nuts.coreg.hsCoord;fiducials_meg'];
         case '.shape'
             [num] = textread(headshapefile,'%f',1);
             [hs_x,hs_y,hs_z] = textread(headshapefile,'%f%f%f',num,'headerlines',1);
-            coreg.hsCoord=[hs_x,hs_y,hs_z]*10; % convert from cm to mm
+            nuts.coreg.hsCoord=[hs_x,hs_y,hs_z]*10; % convert from cm to mm
         case '.elc' % Polaris digitizer electrode positions
             ftelec = ft_read_sens(headshapefile);
-            coreg.hsCoord = ftelec.elecpos;
+            nuts.coreg.hsCoord = ftelec.elecpos;
         otherwise
             try  % could be EEG electrode locations; use FieldTrip to import
                 ftelec = ft_read_sens(headshapefile);
-                coreg.hsCoord = ftelec.elecpos;
+                nuts.coreg.hsCoord = ftelec.elecpos;
             catch
                 errordlg('Unsupported headshape format.');
                 return
@@ -70,9 +70,9 @@ end
 
 
 voxelsize = [4 4 4];
-shift = [ (min(coreg.hsCoord(:,1)) + max(coreg.hsCoord(:,1)) - 256)*0.5
-          (min(coreg.hsCoord(:,2)) + max(coreg.hsCoord(:,2)) - 256)*0.5
-          (min(coreg.hsCoord(:,3)) + max(coreg.hsCoord(:,3)) - 256)*0.5 ];
+shift = [ (min(nuts.coreg.hsCoord(:,1)) + max(nuts.coreg.hsCoord(:,1)) - 256)*0.5
+          (min(nuts.coreg.hsCoord(:,2)) + max(nuts.coreg.hsCoord(:,2)) - 256)*0.5
+          (min(nuts.coreg.hsCoord(:,3)) + max(nuts.coreg.hsCoord(:,3)) - 256)*0.5 ];
 
 % translation_tfm shifts points to be in center of created MRI volume and sets voxelsize
 translation_tfm = [ voxelsize(1)            0            0 shift(1,:)
@@ -80,8 +80,8 @@ translation_tfm = [ voxelsize(1)            0            0 shift(1,:)
                                0            0 voxelsize(3) shift(3,:)
                                0            0            0          1 ];
 
-if(strfind(coreg.mripath,'nutmeg/templates/blank')) % if MRI loaded, superimpose headshape points
-    hsvoxels = nut_coordtfm(coreg.hsCoord,inv(translation_tfm));
+if(strfind(nuts.coreg.mripath,'nutmeg/templates/blank')) % if MRI loaded, superimpose headshape points
+    hsvoxels = nut_coordtfm(nuts.coreg.hsCoord,inv(translation_tfm));
 
     imgformat = 2; % Analyze format, type 2 (i.e., uint8);
 	maxvalue = spm_type(imgformat,'maxval');
@@ -111,18 +111,18 @@ if(strfind(coreg.mripath,'nutmeg/templates/blank')) % if MRI loaded, superimpose
 	hsvol=spm_write_vol(hsvol,hsimg);
 	
     disp('If I only had a brain...');
-    coreg.mripath = hsvol.fname;
-    nut_load_image(coreg.mripath);
+    nuts.coreg.mripath = hsvol.fname;
+    nut_load_image(nuts.coreg.mripath);
     
-    coreg.fiducials_mri_mm = fiducials_meg(1:3,:);
+    nuts.coreg.fiducials_mri_mm = fiducials_meg(1:3,:);
     
-    set(screws.coreg.handles.nut_nose_text,'String',sprintf('MRI: %.1f %.1f %.1f',coreg.fiducials_mri_mm(1,:)));
-    set(screws.coreg.handles.nut_left_text,'String',sprintf('MRI: %.1f %.1f %.1f',coreg.fiducials_mri_mm(2,:)));
-    set(screws.coreg.handles.nut_right_text,'String',sprintf('MRI: %.1f %.1f %.1f',coreg.fiducials_mri_mm(3,:)));
+    set(screws.coreg.handles.nut_nose_text,'String',sprintf('MRI: %.1f %.1f %.1f',nuts.coreg.fiducials_mri_mm(1,:)));
+    set(screws.coreg.handles.nut_left_text,'String',sprintf('MRI: %.1f %.1f %.1f',nuts.coreg.fiducials_mri_mm(2,:)));
+    set(screws.coreg.handles.nut_right_text,'String',sprintf('MRI: %.1f %.1f %.1f',nuts.coreg.fiducials_mri_mm(3,:)));
 else  % if no MRI loaded, create Analyze format image volume containing headshape points
-    hs_blobs = nut_coordtfm(coreg.hsCoord,inv(translation_tfm));
+    hs_blobs = nut_coordtfm(nuts.coreg.hsCoord,inv(translation_tfm));
     spm_orthviews('rmblobs',1);
-	spm_orthviews('addblobs',1,hs_blobs',zeros(size(hs_blobs,1),1),coreg.meg2mri_tfm*translation_tfm);
+	spm_orthviews('addblobs',1,hs_blobs',zeros(size(hs_blobs,1),1),nuts.coreg.meg2mri_tfm*translation_tfm);
     if(strcmp(spm('ver'),'SPM2'))
         % only for SPM2; SPM8 freaks out if we delete the colorbar
         delete(st.vols{1}.blobs{1}.cbar);
