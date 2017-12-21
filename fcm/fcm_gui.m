@@ -191,7 +191,7 @@ else
         case 2
             roi = fcm_anatroi('gui'); 
         case 3
-            [fi,pa]=uigefile('*.mat','Load ROI voxel coordinates...');
+            [fi,pa]=uigetfile('*.mat','Load ROI voxel coordinates...');
             if isequal(fi,0), return, end
             roi=load(fullfile(pa,fi));
             if ~any(isfield(roi,{'voxels' 'MEGvoxels' 'MNIvoxels' 'MRIvoxels'}))
