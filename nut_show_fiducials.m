@@ -5,26 +5,26 @@ function nut_show_fiducials
 %
 % The function uses NUTS global.
 
-global coreg
+global nuts
 switch get(gcbo,'Tag')
     case {'nut_show_fiducials_3d'}
         %check if the required file and variables exist
-        if isempty(coreg)
+        if ~isfield(nuts,'coreg')
          msgbox('Load the image','Volume not found','warn')
          return;
         end
-        if ~isfield(coreg,'fiducials_mri_mm')
+        if ~isfield(nuts.coreg,'fiducials_mri_mm')
             errordlg('Dude, where''s your fiducials?');
             return;            
         end
-        if   ~isfield(coreg,'mesh')
+        if   ~isfield(nuts.coreg,'mesh')
          errordlg('Dude, where''s your head?');
          return            
         end
-        fiducials=coreg.fiducials_mri_mm;
+        fiducials=nuts.coreg.fiducials_mri_mm;
         %display fiducials in 3D
         figure
-        nut_show_head(coreg.mesh);
+        nut_show_head(nuts.coreg.mesh);
         hold on;       
         plot3(fiducials(:,1),fiducials(:,2),fiducials(:,3),'.');
         hold off

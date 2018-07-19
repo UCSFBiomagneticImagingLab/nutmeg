@@ -6,7 +6,7 @@ function [hsCoord_mrimm_ls, mean_sq_err] = nut_coreg_leastsquares(hsCoord_meg,mr
 % hsCoord_meg in MEG mm space and mri_prjpts in MRI mm space
 % finds estimation of transformation between the two.
 	
-global st coreg
+global nuts
 %normalize MEG and MRI data
 meg_origin=[mean(hsCoord_meg(:,1)) mean(hsCoord_meg(:,2)) mean(hsCoord_meg(:,3))]; 
 normal_meg=[hsCoord_meg(:,1)-meg_origin(1) hsCoord_meg(:,2)-meg_origin(2) hsCoord_meg(:,3)-meg_origin(3)];
@@ -33,12 +33,12 @@ transform_matrix_final=[rotation translation];
 transform_matrix_final(4,:)=0;
 transform_matrix_final(4,4)=1;
 %bring MEG points to MRI space
-coreg.meg2mri_tfm=transform_matrix_final;
+nuts.coreg.meg2mri_tfm=transform_matrix_final;
 
 %hsCoord_mrimm_ls=nut_meg2mri(hsCoord_meg);
 %hsCoord_mrimm_ls=nut_meg2mri(hsCoord_meg);
-hsCoord_mrimm_ls=nut_coordtfm(hsCoord_meg,coreg.meg2mri_tfm);
-hsCoord_mrimm_ls=nut_coordtfm(hsCoord_meg,coreg.meg2mri_tfm);
+hsCoord_mrimm_ls=nut_coordtfm(hsCoord_meg,nuts.coreg.meg2mri_tfm);
+hsCoord_mrimm_ls=nut_coordtfm(hsCoord_meg,nuts.coreg.meg2mri_tfm);
 %estimation=estimation';
 %find error
 error=mri_prjpts-hsCoord_mrimm_ls(:,1:3);

@@ -134,7 +134,7 @@ for nn=1:stats.numtests
                 beam.s{1} = zeros(size(beam.voxels,1),length(stats.timepts),newfreqbins);
             end
         end
-        if stats.usespatnormed || stats.markmode==2
+        if stats.usespatnormed || stats.markmode==2 
             if strncmp( spm('ver'),'SPM8',4 ) %SPM8 or SPM8b
                 spmmri = [fileparts(which('spm')) filesep 'canonical' filesep 'avg152T1.nii'];
             elseif strcmp( spm('ver'),'SPM2' )
@@ -225,7 +225,7 @@ for nn=1:stats.numtests
                 %                 pop.s(k1,:,:,k4) = R.roi2voxel_tfm * permute(pop.rois(k1,:,:,k4),[2 3 4 1]);
                 %             end
                 %         end
-                clear subj MNIsubjmap good
+                clear MNIsubjmap good
 
             end     % subject loop
             clear voxelgrid deadvoxels
@@ -244,7 +244,6 @@ for nn=1:stats.numtests
             else
                 beam.s{1} = shiftdim(mean(subj.s(:,:,stats.timepts,stats.frqband),1),1); 
             end
-            clear subj
         end 
         
         % remove voxels not present in all subjects or 0 at all time points 
@@ -270,11 +269,15 @@ for nn=1:stats.numtests
         
         if useroi
             if ~isfield(beam,'R')
-                fprintf('\tLooking for ROI coordinates in common MNI space. This may take a while...\n')
-                coreg = struct('mripath','w','norm_mripath','w','meg2mri_tfm',eye(4)); 
-                beam.R = fcm_voxel2roi(beam.voxels,coreg,'one',roideffile,find(subjgoodroi<1));
+                if stats.usespatnormed
+                    fprintf('\tLooking for ROI coordinates in common MNI space. This may take a while...\n')
+                    coreg = struct('mripath','w','norm_mripath','w','meg2mri_tfm',eye(4)); 
+                    beam.R = fcm_voxel2roi(beam.voxels,coreg,'one',roideffile,find(subjgoodroi<1));
+                    beam.voxels = beam.voxels(beam.R.goodvoxels,:);
+                else
+                    beam.R = subj.R;
+                end
 
-                beam.voxels = beam.voxels(beam.R.goodvoxels,:);
                 if stats.doavg, beam.rois{1} = beam.rois{1}(beam.R.goodroi,:,:); end
             end
             if stats.doavg

@@ -26,6 +26,7 @@ if nc==size(CC.frq,1)     % Legacy compatibility
     [nc,nt,nf]=size(CC.coh);
 end    
 
+% Do Z-transform 
 switch CC.method
     case {'ccohere' 'nccohere'}
         CC.coh = CC.coh./abs(CC.coh) .* atanh(abs(CC.coh));     % Do Z-transform 
@@ -36,23 +37,14 @@ switch CC.method
         CC.coh = abs(CC.coh);
 end
 
-% if remspur
-%     varreal = 1/(2*CC.N);                % Variance of real part of coherence
-%     varimag = (1-varreal^2)/(2*CC.N);    % Variance of imaginary part, for large N this approaches varreal
-%     uci = norminv(0.95,0,sqrt(varimag)); % Upper bound of one-tailed 95% confidence interval
-%     spurious = ( CC.coh < uci );
-%     
-%     CC.coh(spurious)=0;         % Set spurious to 0
-%     clear spurious varreal varimag
-% end
-
+MRIvoxels = nut_meg2mri(nuts.voxels,nuts.coreg);
 T=zeros(nv,nt,nf);
 p=ones(nv,nt,nf);
 numconn=nv-1;
 df=numconn-1;
 
 % Calculate distances
-voxma=[abs(nuts.voxels(:,1)) nuts.voxels(:,2:3)];
+voxma=[abs(MRIvoxels(:,1)) MRIvoxels(:,2:3)];
 voxma=repmat(reshape(voxma,[nv 1 3]),[1 nv 1]);
 dist=zeros(nv,nv,3);
 for k=1:3
@@ -69,9 +61,9 @@ for k=1:size(CC.comps,1)
     CM(CC.comps(k,2),CC.comps(k,1),:,:)=CC.coh(k,:,:);
 end
 
-voxsign=sign(nuts.voxels(:,1));
+voxsign=sign(MRIvoxels(:,1));
 for vv=1:nv
-    e = find( voxsign~=sign(nuts.voxels(vv,1)) );    
+    e = find( voxsign~=sign(MRIvoxels(vv,1)) );    
     f = find( dist(vv,e) < radius  );
     if ~isempty(f)
         I = shiftdim(CM(vv,:,:,:),1);

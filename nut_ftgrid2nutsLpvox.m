@@ -16,8 +16,8 @@ if isfield(grid,'cfg') && strcmp(grid.cfg.normalize,'yes')
     error('please load a grid NOT normalized. else will interfere with inverse methods later')
 end
 if isfield(grid,'leadfield')
-    [nk,nd]=size(grid.leadfield{grid.inside(1)});
-    Lptmp=reshape([grid.leadfield{grid.inside}],nk,nd,length(grid.inside));
+    [nk,nd]=size(grid.leadfield{find(grid.inside,1)});
+    Lptmp=reshape([grid.leadfield{grid.inside}],nk,nd,sum(grid.inside));
     % % match_str is a fieldtrip function;
     % % sensor order from ft doesn't match nm necessarily
     % % haven't decided if this necessary or not, something not working..
@@ -27,10 +27,10 @@ if isfield(grid,'leadfield')
 else
     Lp=[];
 end
-voxels=10*grid.pos(grid.inside,:);
+voxels=grid.pos(grid.inside,:);
 % ft uses cm, nm uses mm
 if isfield(grid,'xgrid')
-    voxelsize=[mode(10*diff(grid.xgrid)) mode(10*diff(grid.ygrid)) mode(10*diff(grid.zgrid))];
+    voxelsize=[mode(diff(grid.xgrid)) mode(diff(grid.ygrid)) mode(diff(grid.zgrid))];
 else % this is more of a guess
     ardv=abs(round(diff(voxels)));voxelsize(1:3)=mode(ardv(ardv>0));
 end

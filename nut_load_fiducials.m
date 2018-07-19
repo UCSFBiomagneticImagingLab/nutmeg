@@ -8,7 +8,8 @@ function nut_load_fiducials(fullpath_lsc,V)
 %               from calling V=spm_vol(mripath); However, if Nutmeg open
 %               then this will be in global st (st.vols{1})
 
-global coreg st
+global st nuts
+
 if exist('V','var')
     st.vols{1}=V;
 end
@@ -29,13 +30,13 @@ switch filetype
     case '.txt'
         
         [x y z] =textread([pathname_lsc filename_lsc],'%n%n%n%*[^\n]',3);
-        coreg.fiducials_mri_mm=[x y z];
+        nuts.coreg.fiducials_mri_mm=[x y z];
         if regexpi(st.vols{1}.fname,'blank.img')
             %nuts.coreg=nut_CoregistrationTool(nuts.coreg);
             %FIXME: create button to load just lsc in absence of MRI
             disp('you need an MRI before loading fiducials.  you may load LSC without MRI');
         else
-            coreg = nut_coreg_fiducials(false,coreg);
+            nuts.coreg = nut_coreg_fiducials(false,nuts.coreg);
         end
 
 
@@ -131,8 +132,6 @@ switch filetype
             end
         end
 
-        % insert lsc info into nuts.meg
-        global nuts
         %nuts.meg.lsc = 10*(xyzr(:,1:3));
         for ii=1:3,  %% lsc can't be integer since will later difference with voxel coords, and will produce divide by zero error
             if(round(xyzr(:,ii))==xyzr(:,ii))
@@ -146,7 +145,6 @@ switch filetype
         elseif(isfield(nuts.meg,'lsc_sensor_labels'));
             nuts.meg = rmfield(nuts.meg,'lsc_sensor_labels');
         end
-        clear nuts
 
         % now jump down to fiducial block
         fseek(lscfid,0,'bof');
@@ -174,9 +172,7 @@ switch filetype
             %nuts.coreg=nut_CoregistrationTool(nuts.coreg);
             %FIXME: create button to load just lsc in absence of MRI
             disp('you need an MRI before loading fiducials.  you may load LSC without MRI');
-        elseif (isempty(coreg)) %this will assumedly happen when being called from nut_results_viewer
-            
-        else
+        elseif isfield(nuts,'coreg') 
             DIM = st.vols{1}.dim(1:3);
             VOX = nut_pixdim(st.vols{1});
             
@@ -192,28 +188,28 @@ switch filetype
             end
     
             % if radiological, flip x-coords
-            if ~isfield(coreg,'orientation')
-                coreg.orientation=1;
+            if ~isfield(nuts.coreg,'orientation')
+                nuts.coreg.orientation=1;
             end
-            if(~isempty(coreg.orientation) && coreg.orientation == 2)
+            if(~isempty(nuts.coreg.orientation) && nuts.coreg.orientation == 2)
                 ctf2spm_tfm = [1 0 0 0; 0 1 0 257; 0 0 -VOX(1)/VOX(3) [DIM(3)/2 + 128*VOX(1)/VOX(3) + 1]; 0 0 0 1];
             else
                 ctf2spm_tfm = [1 0 0 0; 0 -1 0 257; 0 0 -VOX(1)/VOX(3) [DIM(3)/2 + 128*VOX(1)/VOX(3) + 1]; 0 0 0 1];
             end
             xyz_vx = nut_coordtfm(lrn, ctf2spm_tfm);
-            coreg.fiducials_mri_mm=nut_voxels2mm(xyz_vx);
+            nuts.coreg.fiducials_mri_mm=nut_voxels2mm(xyz_vx);
 %%% OLD WAYS, probably more wrong.
 %             x_vx=lrn(:,1);
-%             if(~isempty(coreg.orientation) && coreg.orientation == 2)  % if radiological
+%             if(~isempty(nuts.coreg.orientation) && nuts.coreg.orientation == 2)  % if radiological
 %                 x_vx = 257-x_vx;  % flip x-coords as well
 %             end
 %             y_vx=257-lrn(:,2);    % y-coords always need to be flipped
 %             z_vx=(0.5*(256+DIM(3)*VOX(3)/VOX(1))-lrn(:,3))*VOX(1)/VOX(3) +1 + VOX(3)/VOX(1);
 %             %z_vx=(0.5*(256+DIM(3)*VOX(3)/VOX(1))-lrn(:,3))*VOX(1)/VOX(3);  %older way
 %             [x y z]=nut_voxels2mm(x_vx,y_vx,z_vx);
-%             coreg.fiducials_mri_mm=[x y z];
+%             nuts.coreg.fiducials_mri_mm=[x y z];
 
-            coreg = nut_coreg_fiducials(false,coreg)
+            nuts.coreg = nut_coreg_fiducials(false,nuts.coreg)
 
         end
 
@@ -234,12 +230,11 @@ switch filetype
         errordlg('Unsupported file type.')
 end
 
-global nuts
 if ~isempty(nuts)
-    if isfield(nuts,'coreg') & (isfield(nuts.coreg,'norm_mripath') & ~isempty(coreg))
-        coreg.fiducials_mni_mm=nut_mri2mni(coreg.fiducials_mri_mm);
+    if isfield(nuts,'coreg') && isfield(nuts.coreg,'norm_mripath')
+        nuts.coreg.fiducials_mni_mm=nut_mri2mni(nuts.coreg.fiducials_mri_mm);
     end
 else
     warning('Did you know you have no nuts?')
 end
-clear nuts
+
