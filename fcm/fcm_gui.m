@@ -215,7 +215,6 @@ else
                 spm_orthviews('addcolouredblobs',1,XYZ.',Z,st.vols{1}.mat,[1 0 0])
                 spm_orthviews('reposition',mean(vmm))
             end
-            
         case 4
             return
     end

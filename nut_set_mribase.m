@@ -1,8 +1,8 @@
 function nut_set_mribase(pat)
 % NUT_SET_MRIBASE  Sets new MRI file paths.
-% When changing to computers or modifying path names, NUTMEG produces errors
-% when session of s_beam files are opened, because if cannot find the MRIs
-% anymore. You can try to resolve this with this function.
+% When changing to computers or modifying path names, NUTMEG can produce errors
+% when sessions or s_beam files are opened, if it cannot find the MRIs
+% anymore. You can resolve this with this function.
 %
 % nut_set_mribase yourprojectpath
 % 

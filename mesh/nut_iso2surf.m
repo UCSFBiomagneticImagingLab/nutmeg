@@ -13,7 +13,7 @@ end
 
 [filename,pathname] = uigetfile({'*.img;*.nii'},'Open Segmentation Iso-Value MRI File') ;
 V = spm_vol(fullfile(pathname,filename));
-[Y,XYZ] = spm_read_vols(V);
+Y = spm_read_vols(V);
 
 lyrvals = unique(reshape(Y,[1,numel(Y)]));
 lyrvals = sort(lyrvals(lyrvals>0));
@@ -76,8 +76,9 @@ for ii = 1:length(lyrvals)
     vol.bnd(ii).faces = face;
 end
 
-vol = decouplesurf(vol);
-
+vol = nut_checksurf(vol);
+% vol = decouplesurf(vol);
+% 
 % for ii = 1:length(lyrvals)
 %     node = vol.bnd(ii).vertices;
 %     face = vol.bnd(ii).faces;
@@ -98,10 +99,10 @@ vol = decouplesurf(vol);
 %     vol.bnd(ii).vertices = node;
 %     vol.bnd(ii).faces = face;
 % end
-for ii = 1:length(lyrvals)
-    [vol.bnd(ii).vertices, vol.bnd(ii).faces] = surfreorient(vol.bnd(ii).vertices, vol.bnd(ii).faces);
-    vol.bnd(ii).faces = vol.bnd(ii).faces(:,[3 2 1]);
-end
+% for ii = 1:length(lyrvals)
+%     [vol.bnd(ii).vertices, vol.bnd(ii).faces] = surfreorient(vol.bnd(ii).vertices, vol.bnd(ii).faces);
+%     vol.bnd(ii).faces = vol.bnd(ii).faces(:,[3 2 1]);
+% end
 
 nut_trimesh(vol); pause(1)
 
@@ -110,17 +111,3 @@ if ~isequal(file,0) & ~isequal(path,0)
     save(strcat(path,file),'vol');
 end
 
-
-
-%%
-% Take care of intersecting surfaces.
-%%
-function vol = decouplesurf(vol)
-
-for ii = 1:length(vol.bnd)-1
-    % Despite what the instructions for surfboolean says, surfaces should
-    % be ordered from inside-out!!
-    [newnode, newelem] = surfboolean(vol.bnd(ii+1).vertices,vol.bnd(ii+1).faces,'decouple',vol.bnd(ii).vertices,vol.bnd(ii).faces);
-    vol.bnd(ii+1).faces = newelem(newelem(:,4)==2,1:3) - size(vol.bnd(ii+1).vertices,1);
-    vol.bnd(ii+1).vertices = newnode(newnode(:,4)==2,1:3);
-end
