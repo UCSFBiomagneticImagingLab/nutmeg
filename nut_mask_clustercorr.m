@@ -1,5 +1,5 @@
 function nut_mask_clustercorr(sbeamfile, clusternum, hardthresh, masktype)
-% usage:  >nut_mask_clustercorr('s_beamtf12_ttest2.mat', 'GWM', 25, .005)
+% usage:  >nut_mask_clustercorr('s_beamtf12_ttest2.mat', 25, .005, 'GWM')
 %
 % User restricts the viewable stat result to labeled voxels (AAL/SPM), as 
 % inflated to the resolution of the lead field, and defines the cluster
@@ -163,6 +163,8 @@ for i = 1:size(s,2)
             index_zero_p_uncorr_neg = find(masked_beam_snpm_p_uncorr_neg == 0);
             masked_beam_snpm_p_uncorr_pos(index_zero_p_uncorr_pos) = 1;
             masked_beam_snpm_p_uncorr_neg(index_zero_p_uncorr_neg) = 1;
+            snpm.p_corr_pos(index_zero_p_uncorr_pos,timewin,freqbin)=1; %
+            snpm.p_corr_neg(index_zero_p_uncorr_neg,timewin,freqbin)=1; %
             %Create beam file with restricted voxels and uncorr pvalues
             voi_beam{i}(:,timewin,freqbin)=masked_beam;
             voi_mask{i}(:,timewin,freqbin)=voxel_mask;
