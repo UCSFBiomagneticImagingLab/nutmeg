@@ -206,8 +206,16 @@ params.band = [lowfreq hifreq];
 params.session = sessionfile;
 for kk=1:size(R,3) % Johanna uses this mineig for inverse regularization
     % FIXME: in future, use 2nd output of nut_cov rather than recompute mineig here
+    % keeping mineig for consistency, allowing multi-window control with win length = active.
     if ~isempty(Rcon)
-        params.mineig(kk)=min(eig([R(:,:,kk)+Rcon]/2));
+    	if length(size(Rcon))==3 && size(Rcon,3)==size(R,3) 
+            params.mineig(kk)=min(eig([R(:,:,kk)+Rcon(:,:,kk)]/2));
+        elseif length(size(Rcon))==3 && size(Rcon,3)~=size(R,3) 
+            warning('Active and Control R do not have the same number of timepoints.');
+            warning('Mineig inverse regularization fails, not creating params.mineig');
+        else
+            params.mineig(kk)=min(eig([R(:,:,kk)+Rcon]/2));
+        end
     else
         params.mineig(kk)=min(eig([R(:,:,kk)]/2));
     end
